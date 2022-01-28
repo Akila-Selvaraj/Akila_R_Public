@@ -1,0 +1,127 @@
+---
+title: "Week7_Assignment"
+author: "Akila Selvaraj"
+date: "1/26/2022"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+
+# Research question being investigated:
+We have StudentSurvey dataset which has data about time spent by students in reading, time spent for TV, Happiness and Gender. In this project, We are going to investigate if there is a significant relationship between the amount of time spent reading and the time spent watching television.
+
+``` {r include=FALSE}
+getwd()
+setwd("C:/Users/akila/Documents/Data Science/R_projects/dsc520-master")
+Survey_df <- read.csv("data/student-survey.csv")
+```
+
+# i) Covariance of the Survey variables and Indication of Results
+
+Covariance of TimeReading and TimeTV is `r cov(Survey_df$TimeReading,Survey_df$TimeTV)`
+
+Covariance of all the Survey variables
+```{r echo=FALSE}
+cov(Survey_df[, c(1, 2:3)])
+```
+
+Covariance indicates the relationship between two variables whenever one variable changes. Covariance gives us a positive number if the variables are positively related. We would get a negative number if they are negatively related. A high covariance basically indicates there is a strong relationship between the variables. A low value means there is a weak relationship.
+
+Covariance results of Survey variables says that there is a negative correlation between TimeReading and TimeTV which indicates that these variables are negatively related.
+Covariance between TimeReading and Happiness is negative whereas covariance between TimeTV and Happiness is positive which indicates watching TV increasing happiness than reading.
+
+# ii) Measurement being used for the variables
+By looking at the data, TimeReading was measured in hours whereas TimeTV was measured in minutes, and Happiness was calculated in percentage.
+
+### Effect on covariance calculation by changing the measurement
+Time variables in the data, TimeReading and TimeTV were measured differently. TimeReading was measured in hours gives less covariance. TimeTV measured in minutes yields greater covariance value. Using same measurement for both the variables change the result of covariance. Covariance result will be high for TimeReading if we convert the values into minutes. 
+
+### Better alternative
+Using different measurements might be a problem especially when we compare these two variables with the third variable which is Happiness in this study. Covariance varies high between TimeReading and TimeTV because of this different measurements being used.
+As an alternative, we can convert the measurements of one of the variables to be in sync with other variable for better analysis of results. 
+
+# iii) Correlation test to perform
+To determine the type of correlation to perform,lets the visualize the data using scatter plot.
+```{r echo=FALSE}
+library('ggplot2')
+library('ggpubr')
+ggscatter(Survey_df, x = "TimeReading", y = "TimeTV", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "TimeReading", ylab = "TimeTV")
+```
+
+From the plot, p value is  0.00032 which is less than 5% shows that correlation between TimeReading and TimeTV is significant. As we can say that both populations may come from normal distributions, its recommended to use parametric correlation method Pearson. From the plot, we can predict that correlation test of TimeTV and TimeReading would yield negative correlation.
+
+### Correlation Test of TimeReading and TimeTV
+```{r echo=FALSE}
+cor.test(Survey_df$TimeTV,Survey_df$TimeReading)
+```
+
+# iv) Correlation analysis
+### 1. Correlation of all variables 
+```{r echo=FALSE}
+   cor(Survey_df[, c(1, 2:4)])
+```
+### 2.  Single correlation between two pair of the variables.
+Correlation test of TimeReading and TimeTV is 
+```{r echo=FALSE} 
+cor.test(Survey_df$TimeReading,Survey_df$TimeTV)
+```
+Correlation test of TimeReading and Happiness is 
+```{r echo=FALSE} 
+cor.test(Survey_df$TimeReading,Survey_df$Happiness)
+```
+Correlation test of TimeTV and Happiness is 
+```{r echo=FALSE} 
+cor.test(Survey_df$TimeTV,Survey_df$Happiness)
+```
+### 3.Repeating correlation test in step 2 by setting the confidence interval at 99%
+
+Correlation test of TimeReading and TimeTV is 
+```{r echo=FALSE} 
+cor.test(Survey_df$TimeReading,Survey_df$TimeTV, method = "pearson", conf.level = 0.99)
+```
+### 4.Relationship between the variables as per the correlation matrix
+The correlation coefficient between the two vectors TimeReading and TimeTV turns out to be  -0.8830677. The test statistic turns out to be  -5.6457 and the corresponding p-value is 0.0003153. Since this value is less than .05, we have sufficient evidence to say that the correlation between the two variables is statistically significant.
+
+# v) Calculation of correlation coefficient and the coefficient of determination
+
+```{r echo=FALSE}
+model <- lm(Survey_df$TimeReading~Survey_df$TimeTV, data=Survey_df)
+summary(model)
+```
+
+### Conclusion from the results of correlation coefficient and coefficient of determination
+The correlation coefficient of TimeTV and Happiness is 0.63655. 
+Since it is little close to 1, we can say that the variables are positively linearly related.
+The correlation coefficient of TimeReading and Happiness is -0.4348663. 
+Since it is negative, we can say that the variables are negatively linearly related.
+
+Co-efficient of determination(R-squared) of the model is 0.7798. This means that 77.98% of the variation in the TimeReading can be explained by the number of hours spent in watching TV.
+
+# vi) Based on the analysis, we can say that watching more TV makes the students to read less. Explain?
+Yes, based on the analysis we did, we can say that watching more TV caused students to read less. Negative correlation coefficient of TimeReading and TimeTV indicates that more the time spent in TV , less the time students spend in reading. From the linear regression model, r-squared of 77% reveals that 77% of the data fit the regression model which in turns reiterates that the students who spending more time in TV reading less.
+
+# vii) Partial Correlation
+
+### Partial correlation between TimeReading and Happiness by controlling TimeTV
+```{r echo=FALSE}
+library('ppcor')
+pcor.test(Survey_df$TimeReading,Survey_df$Happiness,Survey_df$TimeTV, method = "pearson")
+```
+### Partial correlation between TimeTV and Happiness by controlling TimeReading
+```{r echo=FALSE}
+pcor.test(Survey_df$TimeTV,Survey_df$Happiness,Survey_df$TimeReading, method = "pearson")
+```
+### Partial correlation between TimeReading and TimeTV by controlling Happiness
+```{r echo=FALSE}
+pcor.test(Survey_df$TimeReading,Survey_df$TimeTV,Survey_df$Happiness, method = "pearson")
+```
+
+Partial correlation of time reading and time TV is negative -0.87294. As the TimeTV increases, time spent on reading decreases.
+In other words, there is a significant negative correlation between the time students spend on TV and reading. 
+Partial correlation of timeTV and Happiness is more than partial correlation of timereading and happiness which indicates spending more time in TV yields more happiness than spending more time in reading.
