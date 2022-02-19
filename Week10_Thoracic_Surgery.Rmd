@@ -1,0 +1,66 @@
+---
+title: "Week10_Thoracic_Surgery"
+author: "Akila Selvaraj"
+date: "2/19/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r include=FALSE}
+#setwd("G:/Users/a162940/Akila/Work/R/Projects/dsc520-master")
+setwd("C:/Users/akila/Documents/Data Science/R_projects/dsc520-master")
+
+
+
+library('foreign')
+library("rio")
+
+library(readxl)
+
+Thoracic_df <- data.frame(read.arff("data/ThoraricSurgery.arff"))
+
+```
+
+# Logistic regression
+```{r}
+
+library('mlogit')
+
+mlChat <- mlogit.data(Thoracic_df, choice = "Risk1Yr", shape = "wide")
+
+Thoracic_glm <- glm(Risk1Yr ~ AGE + DGN + PRE4 + PRE5  + PRE6 + PRE7 + PRE8 + PRE9 +
+                      PRE10 + PRE11 + PRE14 + PRE17 + PRE19 + PRE25 +
+                      PRE30 + PRE32 , data = Thoracic_df, family = binomial(link='logit'))
+```
+
+# Summary of logistic model
+```{r}
+summary(Thoracic_glm)
+```
+Out of all the variables, few of the variables like PRE9T,PRE14OC14,PRE17T,PRE30T turned out to be significant.
+
+PRE9T - The beta coefficient against this variable is 1.368. Let us convert this value into odds by taking the exp(1.368) = 3.927. The value indicates that the odds of an individual being in Risk1Yr increases by 3.9% than the one with PRE9 F value.
+
+Out of 2 levels, F level became the reference, and thus all PRE variables are inferred in comparison to the referenced variable. That is how we interpret the categorical variables.
+
+Age - The beta coefficient of the age variable is 0.009506, which is in the logit of odds terms. 
+When we convert this to odds by taking exp(0.023362) we get 1.0095. 
+The value indicates that as age increase by one more unit, then the odds of an individual being in the Risk1Yr F group will increase by 2%.
+
+# Predicting outcome variable
+```{r}
+predicted_df <- predict(Thoracic_glm, Thoracic_df, type = "response")
+summary(predicted_df)
+```
+
+# Percentage of correct predictions - Accuracy of the model
+```{r}
+library("performance")
+performance_pcp(Thoracic_glm, ci = 0.95, method = "Herron", verbose = TRUE)
+```
+AS PCP is above 50%, we can say that the PCP of the full model is considerably above the null model's PCP.
+
+The likelihood-ratio test indicates that the model has a significantly better fit than the null-model as p is less than 0.05.
+
+The accuracy of the model from percentage of correct predictions is 77%.

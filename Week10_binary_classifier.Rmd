@@ -1,0 +1,46 @@
+---
+title: "Week10_binary_classifier"
+author: "Akila Selvaraj"
+date: "2/19/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Logistic Regression of Binary Classifier
+
+```{r include=FALSE}
+## Set the working directory to the root of your DSC 520 directory
+#setwd("G:/Users/a162940/Akila/Work/R/Projects/dsc520-master")
+setwd("C:/Users/akila/Documents/Data Science/R_projects/dsc520-master")
+bin_class_df <- read.csv("data/binary-classifier-data.csv")
+
+library('caret')
+library('dplyr')
+```
+
+# Splitting training and test dataset
+  I am splitting the data into training and test dataset to calculate the accuracy of the model.
+```{r}
+trainIndex <- createDataPartition(bin_class_df$label, p = .67,list = FALSE,times = 1)
+
+bin_class_train <- bin_class_df[trainIndex,]
+bin_class_test <- bin_class_df[-trainIndex,]
+
+bin_class_glm <- glm(label ~ x + y , data = bin_class_train, family = binomial(link='logit'))
+bin_class_test$model_prob <- predict(bin_class_glm, bin_class_test, type = "response")
+```
+# Summary of model
+```{r}
+summary(bin_class_glm)
+```
+
+# Accuracy of the logistic regression classifier
+```{r }
+
+fitted.results <- predict(bin_class_glm,newdata=bin_class_test,type='response')
+fitted.results <- ifelse(fitted.results > 0.5,1,0)
+misClasificError <- mean(fitted.results != bin_class_test$label)
+print(paste('Accuracy',1-misClasificError))
+```
+Accuracy of the logistic regression classifier is 0.53.
