@@ -1,0 +1,189 @@
+---
+title: "House Price Prediction"
+author: "Akila Selvaraj"
+date: "2/17/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r include=FALSE}
+# Set the working directory to the root of your DSC 520 directory
+library(tidyverse)
+#setwd("G:/Users/a162940/Akila/Work/R/Projects/")
+setwd("C:/Users/akila/Documents/Data Science/R_projects")
+```
+
+# Import and Cleaning Data
+
+I have selected datasets such as income, crime_rate, house_pricing, school, income rate for each county to predict the house price. All the datasets have different level of information on different grain. If the data is not clean, the end result will not be accurate and as expected. The first step in data preparation is looking at the data and understand what information each file has. Also, each file has lot of fields which are not needed for my study. Understanding what each field tells and find out the fields relevant for my topic is the initial step performed. Once I figured out the columns required, then I filtered only those.
+
+Steps I followed to import and clean data.
+
+1. Familiarize myself with each dataset.
+2. Filter the columns which are needed for my study
+3. Check if there are any missing values and perform imputation.
+4. Remove empty columns and rows, and remove duplicate rows
+4. Perform datatype conversion if needed
+5. Summarize the columns if required
+6. Merge the datasets 
+7. Rename the column names into some meaningful name
+
+# Final dataset
+
+I have merged multiple different datasets based on FIPS code and constructed a new dataset which is used for prediction of house prices. I use county_time_series dataset from Zillow to predict the house prices in each USA county.
+
+After performing couple of transformations in each and every dataset as needed, I combined all those based on FIPS code. Now the final dataset just contains the necessary fields from each dataset for each FIPS county.
+
+This is the Final dataset which I created by combining all the various datasets and after handling missing fields.
+
+*Final Dataset*
+
+```{r echo=FALSE}
+House_price_df <- read.csv("Final_Project_Data\\Final_house_prediction_Data.csv")
+
+new_merged_df <- read.csv("Final_Project_Data\\Final_house_prediction_Data.csv")
+
+House_price_df <- select(House_price_df, -c(Saledate, Salemonth, Saleyear))
+
+House_price_df %>% head()
+```
+
+
+# Information - not self-evident
+  Not all the information in the dataset are self-evident. I had to go over each dataset to identify the fields. Though data dictionary is available for each dataset in zillow economics dataset, it doesn't specify the relationship between the csv files and other different attributes. There are different attributes like FIPS_ST, FIPS_CT which should be linked with ZIP and FIPS. I had to understand the relationship between these variables and how to merge other datasets with pricing data based on FIPS. 
+  
+  Income dataset which I picked doesn't have FIPS on it. So, I had to find other dataset to combine using ZIP and get the FIPS. There are many attributes in the income dataset and I had to pick the right one for my study which gives the income for each county.
+  
+  In Unemployment dataset, unemployment rates are distributed in multiple columns, and have one record per county and the values are split into multiple columns, one year per column. I had to pivot the column wise unemployment rate for each year into row wise to merge with house price datasets.
+
+# Different ways to look at the data
+  Before passing the data to model, I need to look into the data in multiple ways.First thing to start with is the minimum and maximum value of each variables and check if it falls within the range. If values are not within the range, I had to check if any outliers are present. There are chances that some of the values have been entered wrongly due to manual error which may cause outlier. Those values should be removed or imputed. Next thing to handle is missing values. I replaced missing values with median values wherever applicable and dropped the rows with missing values at some places depends on the data. If values are completely missing for a particular group of data, I removed the group completely and if one or two values are missing for a set of group, I replaced that with median or mean whichever seems appropriate for that feature.
+
+
+# Sliing and Dicing
+
+  Slicing has been applied on time series dataset to get the data only after 2000 as this dataset is humongous and I can use only part of it for my study. In each and every dataset, there are lot of columns which are not required for my study. So, in the individual datasets I am creating, I diced only required columns. In crime dataset, I had to combine FIPS_ST and FIPS_CTY to get the Region code to be consistent with other datasets.
+  
+  For some of the datasets, I have to summarize and aggregate the data to calculate the mean/median and assign to missing values.
+
+# Summarize the data to answer key questions
+
+  Applying summary function on my data gives the minimum and maximum value of each variable, and its mean, median.
+To summarize, my final dataset has HousePrice, Incomelevel, crimerate, schools etc. Dependent factor is HousePrice which I am going to check how it is dependent on other independent variables and the correlation between these variables.
+
+```{r echo=FALSE}
+summary(House_price_df)
+```
+
+*Coefficient Correlation*
+```{r echo=FALSE}
+library("corrplot")
+cor(House_price_df[, c('FIPS','HousePrice','Median_Income','count_of_schools','crime_rate_per_100000','unemp_rate','Inflation_Rate')],use = "complete.obs")
+
+#cor.test(House_price_df$Median_Income,new_merged_df$HousePrice )
+```
+
+# Plots and Tables to illustrate the findings
+
+To visualize the correlation coefficient,I am plotting correlation matrix among all the features in my final dataset.
+
+*Correlation Matrix*
+
+```{r echo=FALSE}
+
+library("corrplot") 
+library("ggcorrplot")
+library("ggplot2")
+cor_data <- cor(House_price_df[, c('FIPS','HousePrice','Median_Income','count_of_schools','crime_rate_per_100000','unemp_rate','Inflation_Rate')],use = "complete.obs")
+ggcorrplot(cor_data, hc.order = TRUE, method ="square")
+```
+This correlation matrix reiterates the relationship among the features. As per the matrix, there is a positive correlation between House Price and median income, and House price and count of schools. There is a negative correlation between House Price and crime_rate, and between House price and unemployment rate. Inflation Rate in this case is insignificant. 
+
+*Histogram*
+
+Plotting histograms of all features in the dataset to get an idea on the distribution of data
+```{r echo=FALSE}
+
+library(purrr)
+library(tidyr)
+library(ggplot2)
+
+House_price_df %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram()
+```
+ 
+*Density Plot*
+```{r echo=FALSE}
+ library(ggplot2)
+House_price_df %>%
+  keep(is.numeric) %>%                     
+  gather() %>%                             
+  ggplot(aes(value)) +                     
+    facet_wrap(~ key, scales = "free") +   
+    geom_density()   
+```
+
+
+```{r include=FALSE}
+#Scatter plot matrix
+
+pairs(~HousePrice+Median_Income+crime_rate_per_100000+count_of_schools+unemp_rate+Inflation_Rate,data = House_price_df,
+   main = "Scatterplot Matrix")
+```
+
+
+*Scatter plot*
+
+Plotting scatter plot with all the features against House Price.
+  
+```{r echo=FALSE}
+plot(x=House_price_df$Median_Income, y=House_price_df$HousePrice) 
+plot(x=House_price_df$crime_rate_per_100000, y=House_price_df$HousePrice) 
+plot(x=House_price_df$count_of_schools, y=House_price_df$HousePrice)
+plot(x=House_price_df$unemp_rate, y=House_price_df$HousePrice)
+plot(x=House_price_df$Inflation_Rate, y=House_price_df$HousePrice)
+
+```
+
+# Machine learning techniques
+I am planning to incorporate multiple linear regression technique to answer the research questions.
+ 
+ # Model building
+```{r model-building}
+#set a seed 
+# install.packages("caTools")
+library("caTools")
+set.seed(123)
+#Split the data , `split()` assigns a booleans to a new column based on the SplitRatio specified. 
+
+# new_merged_df <- data.frame(read.csv("Final_Project_Data/Final_house_prediction_Data.csv"))
+
+House_price_df <- as.data.frame(new_merged_df)
+
+split <- sample.split(House_price_df,SplitRatio =0.75)
+train <- subset(House_price_df,split==TRUE)
+test <- subset(House_price_df,split==FALSE)
+
+model <- lm(HousePrice ~ Median_Income + count_of_schools + crime_rate_per_100000 + unemp_rate +  Inflation_Rate , data = train)
+summary(model)
+```
+
+Model summary says Inflation rate doesn't have much influence on determining the house price.I want to to execute the model gain by taking off the Inflation Rate as there is not much significance for Inflation Rate.
+
+```{r echo=FALSE}
+model2 <- lm(HousePrice ~ Median_Income + count_of_schools + crime_rate_per_100000 + unemp_rate, data = train)
+summary(model2)
+```
+
+# Questions for future steps
+
+*   For future steps, I am planning to check if I do more cleanup, would the accuracy model be increased. 
+*   What are the other features I can add or edit in my model to increase the accuracy.
+*   Other than the datasets and factors considered for predicting House Price, should any other details of information need to be considered which will influence House Price.
+*   Should outliers and Influentiatl cases need be looked into more to increase the accuracy of the model.
