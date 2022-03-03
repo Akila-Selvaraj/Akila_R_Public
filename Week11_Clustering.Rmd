@@ -1,0 +1,59 @@
+---
+title: "Week11_Clustering"
+author: "Akila Selvaraj"
+date: "2/27/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r dirset, include=FALSE}
+#setwd("G:/Users/a162940/Akila/Work/R/Projects/dsc520-master/")
+setwd("C:/Users/akila/Documents/Data Science/R_projects/dsc520-master/")
+clustering_data <- data.frame(read.csv("data/clustering-data.csv"))
+```
+
+
+# Scatter plot of clustering data
+```{r scatterplot}
+library(ggplot2)
+ggplot(clustering_data, aes(x = x, y = y)) +   geom_point() +
+  theme_bw()
+```
+
+```{r include=FALSE}
+#Fit the dataset using the k-means algorithm from k=2 to k=12
+library(dplyr)
+model <- kmeans(clustering_data, 2)
+# Save the cluster number in the dataset as column 'group'
+clustering_data$group <- as.factor(model$cluster)
+cluster_k_2 <- clustering_data %>%
+  ggplot(aes(x = x, y = y, n, colour = group)) + geom_point() +
+  ggtitle("Cluster_Grouping_with_k_2")
+cluster_k_2
+```
+
+
+# Scatter Plots for each value of k
+```{r }
+library(purrr)  # for map_dbl
+# Compute clustering algorithm (e.g., k-means clustering) for different values of k. For instance, by varying k from 1 to 10 clusters.
+# For each k, calculate the total within-cluster sum of square (wss).
+tot_withinss <- map_dbl(1:20, function(k) {
+  model <- kmeans(clustering_data, centers = k)
+  clustering_data$group <- as.factor(model$cluster)
+  Title <- paste("Scatter plot of clusters where K =",k)
+  cluster_plot <- clustering_data %>% ggplot(aes(x = x, y = y, n, colour = group)) + geom_point() +   ggtitle(Title)
+  print(cluster_plot)
+  model$tot.withinss
+})
+#Plot the curve of average distance vs number of clusters k.
+data.frame(k = 1:20, tot_withinss = tot_withinss) %>%
+  ggplot(aes(x = k, y = tot_withinss )) + geom_point() +
+  geom_line() + labs(x = "Number of clusters k", y = "Average distance")
+  scale_x_continuous(breaks = 1:20)
+```
+
+# Elbow point
+The location of a bend (knee) in the plot is generally considered as an indicator of the appropriate number of clusters. Looking at the graph of number of clusters vs average, the elbow point for this dataset is 5.

@@ -1,0 +1,194 @@
+---
+title: "Week11_Classifier"
+author: "Akila Selvaraj"
+date: "2/27/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Binary Classifier Data
+
+```{r, setup,  include=FALSE}
+#setwd("G:/Users/a162940/Akila/Work/R/Projects/dsc520-master/")
+setwd("C:/Users/akila/Documents/Data Science/R_projects/dsc520-master/")
+bin_data <- data.frame(read.csv("data/binary-classifier-data.csv"))
+bin_data$label = as.factor(bin_data$label)
+tri_data <- data.frame(read.csv("data/trinary-classifier-data.csv"))
+tri_data$label = as.factor(tri_data$label)
+```
+
+
+# Scatter plot of binary classifier data
+
+```{r, scatterplot, echo=FALSE}
+library("ggplot2")
+ggplot(data = bin_data, aes(x = x, y = y)) + 
+  geom_point(aes(color = label)) + theme_bw()
+```
+
+# Splitting train and test data for binary classifier data
+```{r echo=FALSE}
+library(class)
+set.seed(321)
+selected <- sample(1:nrow(bin_data), replace = FALSE, 0.9 * nrow(bin_data))
+bin_data.train <- bin_data[selected,]
+bin_data.test <- bin_data[-selected,]
+bin_target_category <- bin_data[selected,1]
+bin_test_category <- bin_data[-selected,1]
+```
+
+
+```{r loop, include=FALSE}
+##Executing in loop
+library(class)
+library("purrr")
+accuracy <- map_dbl(1:7, function(k) {
+  model <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], bin_data.train[,1], k=k, prob=TRUE)
+  tab <- table(model,bin_data.test[,1])
+  accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+  accuracy(tab)
+})
+data.frame(k = c(3,5,10,15,20,25,30),
+           accuracy = accuracy) %>%
+  ggplot(aes(x = k, y = accuracy)) + geom_point(size=3) + geom_line() 
+```
+
+
+```{r }
+#Executing step by step
+#k=3
+binary_knn <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                bin_data.train[,1], k=3, prob=TRUE)
+tab <- table(binary_knn,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- data.frame (k  = 3, accuracy = accuracy(tab))
+#k=5
+binary_knn_5 <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=5, prob=TRUE)
+tab <- table(binary_knn_5,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=5, accuracy = accuracy(tab)))
+#k=10
+binary_knn_10 <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=10, prob=TRUE)
+tab <- table(binary_knn_10,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=10, accuracy=accuracy(tab)))
+#k=15
+binary_knn_15 <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=15, prob=TRUE)
+tab_15 <- table(binary_knn_15,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=15, accuracy=accuracy(tab)))
+#k=20
+binary_knn <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=20, prob=TRUE)
+tab <- table(binary_knn,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=20, accuracy=accuracy(tab)))
+#k=25
+binary_knn <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=25, prob=TRUE)
+tab <- table(binary_knn,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=25, accuracy=accuracy(tab)))
+#k=30
+binary_knn_30 <- knn(bin_data.train[,c(2,3)], bin_data.test[,c(2,3)], 
+                  bin_data.train[,1], k=30, prob=TRUE)
+tab <- table(binary_knn_30,bin_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=30, accuracy=accuracy(tab)))
+```
+
+# K vs Accuracy data
+```{r echo=FALSE}
+accuracy_df
+```
+
+# Plot K vs accuracy
+```{r }
+ggplot(data = accuracy_df, aes(x = k, y = accuracy)) +  geom_point(size=3) +   theme_bw() + geom_line() 
+```
+
+# Trinary classifier data
+## Scatter plot of trinary classifier data
+
+```{r, tri_scatterplot, echo=FALSE}
+library("ggplot2")
+getwd() 
+ggplot(data = tri_data, aes(x = x, y = y)) + 
+  geom_point(aes(color = as.factor(label))) +
+  theme_bw()
+```
+
+## Splitting train and test data for binary classifier data
+```{r echo=FALSE}
+library(class)
+set.seed(321)
+selected <- sample(1:nrow(tri_data), replace = FALSE, 0.9 * nrow(tri_data))
+tri_data.train <- tri_data[selected,]
+tri_data.test <- tri_data[-selected,]
+tri_target_category <- tri_data[selected,1]
+tri_test_category <- tri_data[-selected,1]
+```
+
+#Executing step by step by changing k values
+```{r }
+#k=3
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                tri_data.train[,1], k=3, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- data.frame (k  = 3, accuracy = accuracy(tab))
+#k=5
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=5, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=5, accuracy = accuracy(tab)))
+#k=10
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=10, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=10, accuracy=accuracy(tab)))
+#k=15
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=15, prob=TRUE)
+tab_15 <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=15, accuracy=accuracy(tab)))
+#k=20
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=20, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=20, accuracy=accuracy(tab)))
+#k=25
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=25, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=25, accuracy=accuracy(tab)))
+#k=30
+trinary_knn <- knn(tri_data.train[,c(2,3)], tri_data.test[,c(2,3)], 
+                  tri_data.train[,1], k=30, prob=TRUE)
+tab <- table(trinary_knn,tri_data.test[,1])
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy_df <- rbind(accuracy_df, data.frame(k=30, accuracy=accuracy(tab)))
+```
+
+# Plot K vs accuracy
+```{r }
+ggplot(data = accuracy_df, aes(x = k, y = accuracy)) +  geom_point(size=3) +   theme_bw() + geom_line() 
+```
+
+# Linear classifier accuracy on datasets
+
+Accuracy looks good in linear classifier and the plot confirms the same.
+
+
+# Accuracy difference between regression and linear classifier
+Accuracy of logistic regression classifier from last week was just 0.5. But in linear classifier, accuracy has been increased above 80 which is good. Regression algorithm perform better when we try to predict continuous quantity numerical value. As we have to predict discrete classical label, Linear classification works better and the accuracy has been increased too.
+
